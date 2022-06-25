@@ -109,7 +109,7 @@ int main()
             logFile << T << "," << H << "," << P << "," << MM << "," << Decay << '\n';
             H2 -= H1; // decrement print height
         }
-        if (H < 180)
+        if (H < 180) // If Orbit is less then 180 KM end estimation
             break;
 
         P -= dP;
