@@ -21,79 +21,73 @@ More visual https://www.swpc.noaa.gov/communities/satellites
 */
 
 
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <iostream>
 #include <fstream>
-#include <string.h>
+#include <cmath>
+#include <string>
+
 using namespace std;
 
-// TODO find a way to remove the "logfile" extra prints to avoid copy&paste the couts...
-// some methods redirect the stream buffer but that then doesnt allow to print to console :(
-// besides that... code is functional
+// Constants
+const double Me = 5.98e+24; // Earth mass
+const double Re = 6378000;  // Earth radius
+const double G = 6.67e-11;  // Universal constant of gravitation
 
 int main()
 {
-
-    const double Me = 5.98e+24; // Earth mass
-    const double Re = 6378000;  // Earth radius
-    const double G = 6.67e-11;  // Universal constant of gravitation
-
+    // Variables
     char satName[100];
+    double mass, area, H, F10, Ap, T = 0.0, dT = 0.1;
+    double H1 = 10.0, H2;
+    double D9 = dT * 3600 * 24;
+    double R, P;
+
+    // Get input from the user
     cout << "Satellite name: ";
     cin >> satName;
-    double mass;
     cout << "Satellite mass [kg]: ";
     cin >> mass;
-
-    double area;
     cout << "Satellite area [m^2]: ";
     cin >> area;
-
-    double H;
     cout << "Satellite Starting height/Altitude [km]: ";
     cin >> H;
-
-    double F10;
     cout << "Solar Radio Flux (F10.7) in SFU: ";
     cin >> F10;
-
-    double Ap;
     cout << "Geomagnetic A index: ";
     cin >> Ap;
 
+    // Calculate initial values
+    H2 = H;
+    R = Re + H * 1000;
+    P = 2 * M_PI * sqrt(R * R * R / Me / G);
+
     // Log File Config
-    ofstream logFile;
-    
-    strcat_s(satName, "_OrbitalDecay.csv");
-   
-    logFile.open(satName, ios::out);
-    // Log File end Config
+    string fileName = string(satName) + "_OrbitalDecay.csv";
+    ofstream logFile(fileName);
 
-    double T = 0.0, dT = 0.1, H1 = 10.0, H2 = H;
-    double D9 = dT * 3600 * 24;
-    double R = Re + H * 1000;
-    double P = 2 * M_PI * sqrt(R * R * R / Me / G);
-
+    // Display initial values
     cout << "\nFile - " << satName << endl;
     cout << "\t Mass = " << mass << " Kg" << endl;
     cout << "\t Area = " << area << " m^2" << endl;
-    cout << "\t Initial height = " << H << "Km" << endl;
+    cout << "\t Initial height = " << H << " Km" << endl;
     cout << "\t F10.7 = " << F10 << " , "
-        << "Ap = " << Ap << endl;
+         << "Ap = " << Ap << endl;
 
+    // Write initial values to log file
     logFile << "File - " << satName << endl;
     logFile << "\t Mass = " << mass << " Kg" << endl;
     logFile << "\t Area = " << area << " m^2" << endl;
-    logFile << "\t Initial height = " << H << "Km" << endl;
+    logFile << "\t Initial height = " << H << " Km" << endl;
     logFile << "\t F10.7 = " << F10 << " , "
-        << "Ap = " << Ap << endl;
+            << "Ap = " << Ap << endl;
 
+    // Display and write column headers to log file
     cout << "\nTime\t\tHeight\t\tPeriod\t\tMean motion\t\tDecay\n";
     cout << "(days)\t\t(km)\t\t(mins)\t\t(rev/day)\t\t(rev/day^2)\n";
-
     logFile << "\nTime,Height,Period,Mean motion,Decay\n";
     logFile << "(days),(km),(mins),(rev/day),(rev/day^2)\n";
+
+    // Calculate orbital decay
     while (true)
     {
         double SH = (900 + 2.5 * (F10 - 70) + 1.5 * Ap) / (27 - 0.012 * (H - 200));
@@ -109,7 +103,7 @@ int main()
             logFile << T << "," << H << "," << P << "," << MM << "," << Decay << '\n';
             H2 -= H1; // decrement print height
         }
-        if (H < 180) // If Orbit is less then 180 KM end estimation
+        if (H < 180) // If Orbit is less than 180 KM end estimation
             break;
 
         P -= dP;
@@ -118,9 +112,11 @@ int main()
         H = (R - Re) / 1000;                                  // new altitude (semimajor axis)
     }
 
+    // Display and write re-entry information to log file
     cout << "Re-entry after " << T << " days";
     logFile << "Re-entry after " << T << " days";
 
+    // Close log file
     logFile.close();
     return 0;
 }
